@@ -1,0 +1,55 @@
+# Reverse proxy for WorkAdventure on Railway.
+# Replaces Traefik from the official docker-compose.prod.yaml, which discovers
+# routes through the Docker socket (not available on Railway). The path rules
+# below mirror the Traefik labels in that file.
+#
+# Upstream hosts come from environment variables so service names can change
+# without editing this file:
+#   PLAY_HOST, BACK_HOST, MAP_STORAGE_HOST, UPLOADER_HOST, ICON_HOST
+
+{
+	admin off
+	# Railway terminates HTTPS at its edge; Caddy only serves plain HTTP.
+	auto_https off
+	servers {
+		# Trust X-Forwarded-* headers from Railway's edge proxy so apps see https.
+		trusted_proxies static private_ranges 100.64.0.0/10
+	}
+}
+
+:{$PORT:8080} {
+	# WebSocket connections for the game
+	handle /ws/* {
+		reverse_proxy {$PLAY_HOST}:3001
+	}
+
+	# Back API, prefix stripped
+	handle_path /api* {
+		reverse_proxy {$BACK_HOST}:8080
+	}
+
+	# Map storage, prefix stripped
+	handle_path /map-storage* {
+		reverse_proxy {$MAP_STORAGE_HOST}:3000
+	}
+
+	# Chat file uploads, prefix stripped
+	handle_path /uploader* {
+		reverse_proxy {$UPLOADER_HOST}:8080
+	}
+
+	# Favicon service, prefix stripped
+	handle_path /icon* {
+		reverse_proxy {$ICON_HOST}:8080
+	}
+
+	# Letter icons, redirect target of the icon service (prefix kept)
+	handle /lettericons* {
+		reverse_proxy {$ICON_HOST}:8080
+	}
+
+	# Everything else: the game front end
+	handle {
+		reverse_proxy {$PLAY_HOST}:3000
+	}
+}
