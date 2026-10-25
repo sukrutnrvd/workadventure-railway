@@ -21,40 +21,43 @@
 }
 
 :{$PORT:8080} {
-	import /etc/caddy/auth.caddy
+	# A single route block keeps the access check ahead of the proxy rules below.
+	route {
+		import /etc/caddy/auth.caddy
 
-	# WebSocket connections for the game
-	handle /ws/* {
-		reverse_proxy {$PLAY_HOST}:3001
-	}
+		# WebSocket connections for the game
+		handle /ws/* {
+			reverse_proxy {$PLAY_HOST}:3001
+		}
 
-	# Back API, prefix stripped
-	handle_path /api* {
-		reverse_proxy {$BACK_HOST}:8080
-	}
+		# Back API, prefix stripped
+		handle_path /api* {
+			reverse_proxy {$BACK_HOST}:8080
+		}
 
-	# Map storage, prefix stripped
-	handle_path /map-storage* {
-		reverse_proxy {$MAP_STORAGE_HOST}:3000
-	}
+		# Map storage, prefix stripped
+		handle_path /map-storage* {
+			reverse_proxy {$MAP_STORAGE_HOST}:3000
+		}
 
-	# Chat file uploads, prefix stripped
-	handle_path /uploader* {
-		reverse_proxy {$UPLOADER_HOST}:8080
-	}
+		# Chat file uploads, prefix stripped
+		handle_path /uploader* {
+			reverse_proxy {$UPLOADER_HOST}:8080
+		}
 
-	# Favicon service, prefix stripped
-	handle_path /icon* {
-		reverse_proxy {$ICON_HOST}:8080
-	}
+		# Favicon service, prefix stripped
+		handle_path /icon* {
+			reverse_proxy {$ICON_HOST}:8080
+		}
 
-	# Letter icons, redirect target of the icon service (prefix kept)
-	handle /lettericons* {
-		reverse_proxy {$ICON_HOST}:8080
-	}
+		# Letter icons, redirect target of the icon service (prefix kept)
+		handle /lettericons* {
+			reverse_proxy {$ICON_HOST}:8080
+		}
 
-	# Everything else: the game front end
-	handle {
-		reverse_proxy {$PLAY_HOST}:3000
+		# Everything else: the game front end
+		handle {
+			reverse_proxy {$PLAY_HOST}:3000
+		}
 	}
 }
