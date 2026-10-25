@@ -6,6 +6,9 @@
 # Upstream hosts come from environment variables so service names can change
 # without editing this file:
 #   PLAY_HOST, BACK_HOST, MAP_STORAGE_HOST, UPLOADER_HOST, ICON_HOST
+#
+# Access control (optional password for the whole site) is generated at
+# startup by entrypoint.sh into /etc/caddy/auth.caddy and imported below.
 
 {
 	admin off
@@ -18,6 +21,8 @@
 }
 
 :{$PORT:8080} {
+	import /etc/caddy/auth.caddy
+
 	# WebSocket connections for the game
 	handle /ws/* {
 		reverse_proxy {$PLAY_HOST}:3001
